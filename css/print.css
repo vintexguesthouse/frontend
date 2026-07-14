@@ -1,0 +1,53 @@
+/* ==========================================================================
+   print.css
+   Used only when a guest chooses "Download / print" on the receipt
+   picker. This is NOT the 80mm thermal-printer stylesheet used at the
+   front desk (Receipt.js in the PMS) — that's built for a physical
+   receipt printer. This one assumes a normal A4/letter page, because a
+   guest is saving it as a PDF from their phone or laptop.
+   ========================================================================== */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #print-root,
+  #print-root * {
+    visibility: visible;
+  }
+
+  #print-root {
+    position: static;
+    left: auto;
+    display: block;
+    max-width: 100%;
+  }
+
+  #print-root .receipt {
+    font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+    font-size: 12pt;
+    color: #000;
+    border: 1px solid #000;
+    border-style: dashed;
+    padding: 16mm;
+    max-width: 160mm;
+    margin: 0 auto;
+  }
+
+  #print-root .receipt__status {
+    border: 1px solid #000;
+    background: none !important;
+    color: #000 !important;
+  }
+
+  #print-root .receipt__footnote {
+    font-family: Arial, sans-serif;
+    font-size: 9pt;
+  }
+}
