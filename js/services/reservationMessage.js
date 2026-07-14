@@ -4,11 +4,11 @@
 // and the on-screen/print receipt all render from this object rather than
 // keeping three copies of the same content in sync by hand.
 
-import { ksh, fmtDate, nightsBetween, escapeHtml } from '../utils.js';
+import { ksh, fmtDate, nightsBetween, escapeHtml } from "../utils.js";
 
-const GUESTHOUSE_NAME = 'Vintex Guest House';
-const GUESTHOUSE_PHONE_DISPLAY = '+254 702 863 059';
-const GUESTHOUSE_WHATSAPP_NUMBER = '254726766023'; // no + or leading zero, wa.me format
+const GUESTHOUSE_NAME = "Vintex Guest House";
+const GUESTHOUSE_PHONE_DISPLAY = "+254 702 863 059";
+const GUESTHOUSE_WHATSAPP_NUMBER = "254726766023"; // no + or leading zero, wa.me format
 
 /**
  * @param {object} reservation
@@ -30,26 +30,26 @@ export function buildReservationSummary(reservation) {
 
   const lines = [
     `${GUESTHOUSE_NAME} — Reservation ${reservation.id}`,
-    '',
+    "",
     `${reservation.categoryName} × ${reservation.quantity}`,
     `Check-in:  ${fmtDate(reservation.checkIn)}`,
     `Check-out: ${fmtDate(reservation.checkOut)}`,
-    `${nights} night${nights === 1 ? '' : 's'} · ${reservation.numGuests} guest${
-      reservation.numGuests === 1 ? '' : 's'
+    `${nights} night${nights === 1 ? "" : "s"} · ${reservation.numGuests} guest${
+      reservation.numGuests === 1 ? "" : "s"
     }`,
-    '',
+    "",
     `Guest: ${reservation.guestName}`,
     `Phone: ${reservation.guestPhone}`,
     reservation.guestEmail ? `Email: ${reservation.guestEmail}` : null,
     reservation.notes ? `Notes: ${reservation.notes}` : null,
-    '',
+    "",
     `Estimated total: ${ksh(subtotal)}`,
-    '',
-    'Status: Pending — we will confirm shortly.',
-    `Questions? Call or WhatsApp ${GUESTHOUSE_PHONE_DISPLAY}.`,
+    "",
+    "Status: Pending — we will confirm shortly.",
+    `Questions? Call or WhatsApp ${GUESTHOUSE_PHONE_DISPLAY}.`
   ].filter((line) => line !== null);
 
-  const text = lines.join('\n');
+  const text = lines.join("\n");
 
   const html = `
     <div class="receipt">
@@ -79,8 +79,8 @@ export function buildReservationSummary(reservation) {
       <dl class="receipt__details">
         <dt>Name</dt><dd>${escapeHtml(reservation.guestName)}</dd>
         <dt>Phone</dt><dd>${escapeHtml(reservation.guestPhone)}</dd>
-        ${reservation.guestEmail ? `<dt>Email</dt><dd>${escapeHtml(reservation.guestEmail)}</dd>` : ''}
-        ${reservation.notes ? `<dt>Notes</dt><dd>${escapeHtml(reservation.notes)}</dd>` : ''}
+        ${reservation.guestEmail ? `<dt>Email</dt><dd>${escapeHtml(reservation.guestEmail)}</dd>` : ""}
+        ${reservation.notes ? `<dt>Notes</dt><dd>${escapeHtml(reservation.notes)}</dd>` : ""}
       </dl>
 
       <div class="receipt__divider"></div>
@@ -117,11 +117,11 @@ export function buildWhatsAppLink(reservation, summaryText) {
 export function buildMailtoLink(reservation, summaryText) {
   const subject = encodeURIComponent(`Your reservation ${reservation.id} — ${GUESTHOUSE_NAME}`);
   const body = encodeURIComponent(summaryText);
-  return `mailto:${reservation.guestEmail || ''}?subject=${subject}&body=${body}`;
+  return `mailto:${reservation.guestEmail || ""}?subject=${subject}&body=${body}`;
 }
 
 export const GUESTHOUSE = {
   name: GUESTHOUSE_NAME,
   phoneDisplay: GUESTHOUSE_PHONE_DISPLAY,
-  whatsappNumber: GUESTHOUSE_WHATSAPP_NUMBER,
+  whatsappNumber: GUESTHOUSE_WHATSAPP_NUMBER
 };
