@@ -10,6 +10,7 @@ const gridMount = document.getElementById('rooms-grid-root');
 const modalMount = document.getElementById('modal-root');
 
 renderNav(navMount, 'rooms');
+renderHero(heroMount, '/frontend/assets/exterior.webp');
 
 const modal = createReservationModal(modalMount);
 

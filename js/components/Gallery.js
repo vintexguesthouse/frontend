@@ -1,5 +1,6 @@
 // components/Gallery.js
 import { el } from "../utils.js";
+import { createLightbox } from "./Lightbox.js";
 
 const GALLERY_IMAGES = [
   // Exterior
@@ -19,34 +20,60 @@ const GALLERY_IMAGES = [
   { src: "/frontend/assets/RESTURANT-3.webp", alt: "Dish drying rack in the kitchen area" }
 ];
 
-
-export function renderHero(mountEl) {
-  const hero = el("section", { class: "hero" }, [
-    el("div", { class: "hero__inner" }, [
-      el("p", { class: "hero__eyebrow" }, "Kajiado · Kimana"),
-      el("h1", { class: "hero__title" }, ["A welcoming guest house,", el("br"), "located in the heart of Kimana."]),
-      el(
-        "p",
-        { class: "hero__lede" },
-        "Five room types, home-cooked meals, and a peaceful courtyard. Vintex Guest House has provided comfortable, affordable stays for travellers and families since 2016."
-      ),
-      el("div", { class: "hero__actions" }, [
-        el("a", { href: "rooms.html", class: "button button--primary" }, "See rooms & rates"),
-        el("a", { href: "contact.html", class: "button button--ghost" }, "Ask a question")
+export function renderHero(mountEl, heroImageUrl) {
+  const hero = el(
+    "section",
+    {
+      class: "hero",
+      style: `background-image: linear-gradient(rgba(250, 248, 243, 0.8), rgba(250, 248, 243, 0.8)), url('${heroImageUrl}'); background-size: cover; background-position: center;`
+    },
+    [
+      el("div", { class: "hero__inner" }, [
+        el("p", { class: "hero__eyebrow" }, "Kajiado · Kimana"),
+        el("h1", { class: "hero__title" }, ["A welcoming guest house,", el("br"), "located in the heart of Kimana."]),
+        el(
+          "p",
+          { class: "hero__lede" },
+          "Five room types, home-cooked meals, and a peaceful courtyard. Vintex Guest House has provided comfortable, affordable stays for travellers and families since 2016."
+        ),
+        el("div", { class: "hero__actions" }, [
+          el("a", { href: "rooms.html", class: "button button--primary" }, "See rooms & rates"),
+          el("a", { href: "contact.html", class: "button button--ghost" }, "Ask a question")
+        ])
       ])
-    ])
-  ]);
+    ]
+  );
   mountEl.append(hero);
 }
 
 export function renderGallery(mountEl) {
+  // The lightbox overlay is fixed/full-screen, so it lives at the end of
+  // <body> rather than inside the gallery section itself.
+  const lightboxMount = el("div", { class: "lightbox-root" });
+  document.body.append(lightboxMount);
+  const lightbox = createLightbox(lightboxMount, GALLERY_IMAGES);
+
   const grid = el(
     "div",
     { class: "gallery__grid" },
     GALLERY_IMAGES.map((img, i) =>
-      el("figure", { class: `gallery__item gallery__item--${(i % 3) + 1}` }, [
-        el("img", { src: img.src, alt: img.alt, loading: "lazy", width: "640", height: "480" })
-      ])
+      el(
+        "figure",
+        {
+          class: `gallery__item gallery__item--${(i % 3) + 1}`,
+          role: "button",
+          tabIndex: "0",
+          "aria-label": `View larger image: ${img.alt}`,
+          onClick: () => lightbox.open(i),
+          onKeydown: (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              lightbox.open(i);
+            }
+          }
+        },
+        [el("img", { src: img.src, alt: img.alt, loading: "lazy", width: "640", height: "480" })]
+      )
     )
   );
   const section = el("section", { class: "section", id: "gallery" }, [

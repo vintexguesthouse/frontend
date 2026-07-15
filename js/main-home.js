@@ -8,6 +8,6 @@ const galleryMount = document.getElementById('gallery-root');
 const aboutMount = document.getElementById('about-root');
 
 renderNav(navMount, 'home');
-renderHero(heroMount);
+renderHero(heroMount, '/frontend/assets/EXTERIOR-5.webp');
 renderGallery(galleryMount);
 renderAbout(aboutMount);

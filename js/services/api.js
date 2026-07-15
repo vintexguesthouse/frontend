@@ -15,47 +15,53 @@ const USE_MOCKS = true; // flip to false once WORKER_BASE_URL is live
 
 const MOCK_LATENCY_MS = 550;
 
+// services/api.js
 const MOCK_CATEGORIES = [
   {
     id: 'family-room',
     name: 'Family Room',
-    description:
-      'Two queen beds and a fold-out for little ones, with a private lounge nook. Our most requested room for groups of 3–5.',
+    description: 'Two queen beds and a fold-out for little ones, with a private lounge nook. Our most requested room for groups of 3–5.',
     pricePerNight: 8500,
     maxGuests: 5,
     totalUnits: 4,
-    imageUrl: '/assets/room-family.svg',
+    imageUrl: '/frontend/assets/family-room-2.webp',
   },
   {
     id: 'garden-double',
     name: 'Garden Double',
-    description:
-      'A queen bed opening onto the courtyard garden. Quiet, ground-floor, and closest to the breakfast terrace.',
+    description: 'A queen bed opening onto the courtyard garden. Quiet, ground-floor, and closest to the breakfast terrace.',
     pricePerNight: 6000,
     maxGuests: 2,
     totalUnits: 6,
-    imageUrl: '/assets/room-garden.svg',
+    imageUrl: '/frontend/assets/DOUBLE-ROOM-2.webp',
   },
   {
     id: 'budget-twin',
     name: 'Budget Twin',
-    description:
-      'Two single beds, compact and comfortable. Popular with students and solo travellers sharing costs.',
+    description: 'Two single beds, compact and comfortable. Popular with students and solo travellers sharing costs.',
     pricePerNight: 3800,
     maxGuests: 2,
     totalUnits: 5,
-    imageUrl: '/assets/room-twin.svg',
+    imageUrl: '/frontend/assets/TWIN-ROOM-3.webp',
   },
   {
     id: 'executive-suite',
-    name: 'Executive Suite',
-    description:
-      'Our largest room: king bed, work desk, and a separate sitting area. Best for longer business stays.',
+    name: 'Queen Suite',
+    description: 'Our largest room: queen bed, work desk, and a separate sitting area. Best for longer business stays.',
     pricePerNight: 12000,
     maxGuests: 3,
     totalUnits: 2,
-    imageUrl: '/assets/room-suite.svg',
+    imageUrl: '/frontend/assets/QUEEN-WADROP-1.webp',
   },
+  {
+    id: 'single-room',
+    name: 'Single Room',
+    description: 'A comfortable and private space, perfect for solo travelers.',
+    pricePerNight: 2500,
+    maxGuests: 1,
+    totalUnits: 3,
+    imageUrl: '/frontend/assets/SINGLE-ROOM-1.webp',
+  }
 ];
 
 // Deterministic-ish mock "booked units" so availability actually varies
