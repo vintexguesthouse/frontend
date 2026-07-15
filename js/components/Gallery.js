@@ -6,16 +6,16 @@ const GALLERY_IMAGES = [
   { src: "/assets/exterior.jpeg", alt: "The guest house exterior courtyard" },
 
   // Rooms
-  { src: "/assets/family-room-2.jpg", alt: "Family room interior with bunk beds and double bed" },
-  { src: "/assets/DOUBLE-ROOM-2.jpg", alt: "Interior of the Double room" },
-  { src: "/assets/SINGLE-ROOM-1.jpg", alt: "Interior of the Single room" },
-  { src: "/assets/TWIN-ROOM 3.jpg", alt: "Interior of the Twin room with mosquito nets" },
-  { src: "/assets/QUEEN-WADROP-1.jpg", alt: "Interior of the Queen room featuring the wardrobe" },
-  { src: "/assets/SINGLE-WADROP.jpg", alt: "Interior of the Single room featuring the wardrobe" },
+  { src: "/frontend/assets/family-room-2.jpg", alt: "Family room interior with bunk beds and double bed" },
+  { src: "/frontend/assets/DOUBLE-ROOM-2.jpg", alt: "Interior of the Double room" },
+  { src: "/frontend/assets/SINGLE-ROOM-1.jpg", alt: "Interior of the Single room" },
+  { src: "/frontend/assets/TWIN-ROOM-3.jpg", alt: "Interior of the Twin room with mosquito nets" },
+  { src: "/frontend/assets/QUEEN-WADROP-1.jpg", alt: "Interior of the Queen room featuring the wardrobe" },
+  { src: "/frontend/assets/SINGLE-WADROP.jpg", alt: "Interior of the Single room featuring the wardrobe" },
 
   // Dining / Restaurant
-  { src: "/assets/RESTURANT-6.jpg", alt: "Restaurant seating area with checkered tables" },
-  { src: "/assets/RESTURANT-3.jpg", alt: "Dish drying rack in the kitchen area" }
+  { src: "/frontend/assets/RESTURANT-6.jpg", alt: "Restaurant seating area with checkered tables" },
+  { src: "/frontend/assets/RESTURANT-3.jpg", alt: "Dish drying rack in the kitchen area" }
 ];
 
 export function renderHero(mountEl) {
