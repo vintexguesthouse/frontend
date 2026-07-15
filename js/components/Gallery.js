@@ -3,19 +3,19 @@ import { el } from "../utils.js";
 
 const GALLERY_IMAGES = [
   // Exterior
-  { src: "/assets/EXTERIOR 1.jpg", alt: "The guest house exterior courtyard" },
+  { src: "/assets/exterior.jpeg", alt: "The guest house exterior courtyard" },
 
   // Rooms
-  { src: "/assets/family room 1.jpg", alt: "Family room interior with bunk beds and double bed" },
-  { src: "/assets/DOUBLE ROOM 1.jpg", alt: "Interior of the Double room" },
+  { src: "/assets/family room 2.jpg", alt: "Family room interior with bunk beds and double bed" },
+  { src: "/assets/DOUBLE ROOM 2.jpg", alt: "Interior of the Double room" },
   { src: "/assets/SINGLE ROOM 1.jpg", alt: "Interior of the Single room" },
-  { src: "/assets/TWIN ROOM 4.jpg", alt: "Interior of the Twin room with mosquito nets" },
+  { src: "/assets/TWIN ROOM 3.jpg", alt: "Interior of the Twin room with mosquito nets" },
   { src: "/assets/QUEEN WADROP 1.jpg", alt: "Interior of the Queen room featuring the wardrobe" },
-  { src: "/assets/SINGLE WADROP 1.jpg", alt: "Interior of the Single room featuring the wardrobe" },
+  { src: "/assets/SINGLE WADROP.jpg", alt: "Interior of the Single room featuring the wardrobe" },
 
   // Dining / Restaurant
-  { src: "/assets/RESTURANT 3.jpg", alt: "Restaurant seating area with checkered tables" },
-  { src: "/assets/RESTURANT 6.jpg", alt: "Dish drying rack in the kitchen area" }
+  { src: "/assets/RESTURANT 6.jpg", alt: "Restaurant seating area with checkered tables" },
+  { src: "/assets/RESTURANT 3.jpg", alt: "Dish drying rack in the kitchen area" }
 ];
 
 export function renderHero(mountEl) {
