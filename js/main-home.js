@@ -8,7 +8,7 @@ const galleryMount = document.getElementById('gallery-root');
 const aboutMount = document.getElementById('about-root');
 
 renderNav(navMount, 'home');
-renderHero(heroMount, '/frontend/assets/EXTERIOR-5.webp', {
+renderHero(heroMount, '/frontend/assets/TWIN-ROOM.jpg', {
   eyebrow: 'Kajiado · Kimana',
   title: ['A welcoming guest house,', null, 'located in the heart of Kimana.'],
   lede:
