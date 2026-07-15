@@ -89,7 +89,7 @@ export function renderGallery(mountEl) {
       el(
         "figure",
         {
-          class: `gallery__item gallery__item--${(i % 3) + 1}`,
+          class: "gallery__item",
           role: "button",
           tabIndex: "0",
           "aria-label": `View larger image: ${img.alt}`,

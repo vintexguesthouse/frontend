@@ -330,8 +330,10 @@ img {
   max-width: var(--max-width);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  grid-auto-rows: auto;
+  /* Same 2-column layout at every breakpoint — no auto-fit column
+     recalculation and no span modifiers, so the grid can't get out of
+     sync with itself between desktop and mobile. */
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 }
 
@@ -339,19 +341,11 @@ img {
   margin: 0;
   overflow: hidden;
   border-radius: var(--radius-md);
-  /* Ensures images have a consistent base aspect ratio without being fixed */
+  /* Row height comes entirely from this aspect ratio — no fixed
+     grid-auto-rows/grid-row-span fighting it, so there's no leftover
+     gap below each image. */
   aspect-ratio: 4 / 3;
   cursor: pointer;
-}
-
-.gallery__item--1 {
-  grid-column: span 4;
-}
-.gallery__item--2 {
-  grid-column: span 2;
-}
-.gallery__item--3 {
-  grid-column: span 2;
 }
 
 .gallery__item img {
@@ -367,15 +361,7 @@ img {
 
 @media (max-width: 720px) {
   .gallery__grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-auto-rows: 160px;
-  }
-  .gallery__item,
-  .gallery__item--1,
-  .gallery__item--2,
-  .gallery__item--3 {
-    grid-column: span 1;
-    grid-row: span 2;
+    gap: 0.6rem;
   }
 }
 
