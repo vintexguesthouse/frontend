@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" width="640" height="480">
-  <rect width="640" height="480" fill="#faf8f3"/>
-  <g opacity="0.5">
-    <circle cx="520" cy="90" r="70" fill="#b8863b"/>
-    <rect x="0" y="360" width="640" height="120" fill="#b8863b" opacity="0.6"/>
-  </g>
-  <text x="320" y="250" font-family="Georgia, serif" font-size="28" fill="#2b2b26" text-anchor="middle">Garden path</text>
-</svg>
