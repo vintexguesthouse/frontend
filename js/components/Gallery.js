@@ -3,8 +3,8 @@ import { el } from "../utils.js";
 
 const GALLERY_IMAGES = [
   // Exterior
-  { src: "/assets/exterior.webp", alt: "The guest house exterior courtyard" },
-  { src: "/assets/EXTERIOR-5.webp", alt: "The guest house name banner" },
+  { src: "/frontend/assets/exterior.webp", alt: "The guest house exterior courtyard" },
+  { src: "/frontend/assets/EXTERIOR-5.webp", alt: "The guest house name banner" },
 
   // Rooms
   { src: "/frontend/assets/family-room-2.webp", alt: "Family room interior with bunk beds and double bed" },
@@ -15,8 +15,8 @@ const GALLERY_IMAGES = [
   { src: "/frontend/assets/SINGLE-WADROP.webp", alt: "Interior of the Single room featuring the wardrobe" },
 
   // Dining / Restaurant
-  { src: "/assets/RESTURANT-6.webp", alt: "Restaurant seating area with checkered tables" },
-  { src: "/assets/RESTURANT-3.webp", alt: "Dish drying rack in the kitchen area" }
+  { src: "/frontend/assets/RESTURANT-6.webp", alt: "Restaurant seating area with checkered tables" },
+  { src: "/frontend/assets/RESTURANT-3.webp", alt: "Dish drying rack in the kitchen area" }
 ];
 
 
