@@ -4,6 +4,7 @@ import { CategoryCard } from './components/CategoryCard.js';
 import { createReservationModal } from './components/ReservationModal.js';
 import { getCategories } from './services/api.js';
 import { el } from './utils.js';
+import { renderHero } from "./components/Gallery.js";
 
 const navMount = document.getElementById('nav-root');
 const gridMount = document.getElementById('rooms-grid-root');
