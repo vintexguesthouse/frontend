@@ -3,7 +3,7 @@ import { el } from "../utils.js";
 
 const GALLERY_IMAGES = [
   // Exterior
-  { src: "/assets/exterior.jpeg", alt: "The guest house exterior courtyard" },
+  { src: "/frontend/assets/exterior.jpeg", alt: "The guest house exterior courtyard" },
 
   // Rooms
   { src: "/frontend/assets/family-room-2.jpg", alt: "Family room interior with bunk beds and double bed" },
