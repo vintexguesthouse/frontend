@@ -20,7 +20,33 @@ const GALLERY_IMAGES = [
   { src: "/frontend/assets/RESTURANT-3.webp", alt: "Dish drying rack in the kitchen area" }
 ];
 
-export function renderHero(mountEl, heroImageUrl) {
+const DEFAULT_HERO_CONTENT = {
+  eyebrow: "Kajiado · Kimana",
+  // Can be a plain string, or an array of strings/nodes (e.g. to insert <br> line breaks).
+  title: ["A welcoming guest house,", null, "located in the heart of Kimana."],
+  lede:
+    "Five room types, home-cooked meals, and a peaceful courtyard. Vintex Guest House has provided comfortable, affordable stays for travellers and families since 2016.",
+  actions: [
+    { href: "rooms.html", label: "See rooms & rates", variant: "primary" },
+    { href: "contact.html", label: "Ask a question", variant: "ghost" }
+  ]
+};
+
+/**
+ * @param {HTMLElement} mountEl
+ * @param {string} heroImageUrl
+ * @param {object} [content] - per-page copy overrides
+ * @param {string} [content.eyebrow]
+ * @param {string|Array} [content.title] - string, or array of strings with `null` standing in for a <br>
+ * @param {string} [content.lede]
+ * @param {{href: string, label: string, variant?: 'primary'|'ghost'}[]} [content.actions]
+ */
+export function renderHero(mountEl, heroImageUrl, content = {}) {
+  const { eyebrow, title, lede, actions } = { ...DEFAULT_HERO_CONTENT, ...content };
+
+  const titleParts = Array.isArray(title) ? title : [title];
+  const titleChildren = titleParts.map((part) => (part === null ? el("br") : part));
+
   const hero = el(
     "section",
     {
@@ -29,17 +55,20 @@ export function renderHero(mountEl, heroImageUrl) {
     },
     [
       el("div", { class: "hero__inner" }, [
-        el("p", { class: "hero__eyebrow" }, "Kajiado · Kimana"),
-        el("h1", { class: "hero__title" }, ["A welcoming guest house,", el("br"), "located in the heart of Kimana."]),
+        el("p", { class: "hero__eyebrow" }, eyebrow),
+        el("h1", { class: "hero__title" }, titleChildren),
+        el("p", { class: "hero__lede" }, lede),
         el(
-          "p",
-          { class: "hero__lede" },
-          "Five room types, home-cooked meals, and a peaceful courtyard. Vintex Guest House has provided comfortable, affordable stays for travellers and families since 2016."
-        ),
-        el("div", { class: "hero__actions" }, [
-          el("a", { href: "rooms.html", class: "button button--primary" }, "See rooms & rates"),
-          el("a", { href: "contact.html", class: "button button--ghost" }, "Ask a question")
-        ])
+          "div",
+          { class: "hero__actions" },
+          actions.map((action) =>
+            el(
+              "a",
+              { href: action.href, class: `button button--${action.variant || "primary"}` },
+              action.label
+            )
+          )
+        )
       ])
     ]
   );

@@ -8,6 +8,15 @@ const galleryMount = document.getElementById('gallery-root');
 const aboutMount = document.getElementById('about-root');
 
 renderNav(navMount, 'home');
-renderHero(heroMount, '/frontend/assets/EXTERIOR-5.webp');
+renderHero(heroMount, '/frontend/assets/EXTERIOR-5.webp', {
+  eyebrow: 'Kajiado · Kimana',
+  title: ['A welcoming guest house,', null, 'located in the heart of Kimana.'],
+  lede:
+    'Five room types, home-cooked meals, and a peaceful courtyard. Vintex Guest House has provided comfortable, affordable stays for travellers and families since 2016.',
+  actions: [
+    { href: 'rooms.html', label: 'See rooms & rates', variant: 'primary' },
+    { href: 'contact.html', label: 'Ask a question', variant: 'ghost' }
+  ]
+});
 renderGallery(galleryMount);
 renderAbout(aboutMount);
