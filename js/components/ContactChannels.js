@@ -1,7 +1,7 @@
 import { el } from "../utils.js";
 import { GUESTHOUSE } from "../services/reservationMessage.js";
 
-const ADDRESS = "Biwot road, Kimana, Kajiado";
+const ADDRESS = "Osupuko road, Kimana, Kajiado";
 const EMAIL = "vintexguesthouse@gmail.com";
 const MAP_EMBED_SRC =
   "https://maps.google.com/?cid=11731574766368708986&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=en&gl=KE&source=embed";

@@ -7,7 +7,7 @@
 import { ksh, fmtDate, nightsBetween, escapeHtml } from "../utils.js";
 
 const GUESTHOUSE_NAME = "Vintex Guest House";
-const GUESTHOUSE_PHONE_DISPLAY = "+254 702 863 059";
+const GUESTHOUSE_PHONE_DISPLAY = "+254 726 766 023";
 const GUESTHOUSE_WHATSAPP_NUMBER = "254726766023"; // no + or leading zero, wa.me format
 
 /**
