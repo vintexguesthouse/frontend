@@ -1,8 +1,8 @@
+// components/ContactChannels.js
 import { el } from "../utils.js";
 import { GUESTHOUSE } from "../services/reservationMessage.js";
 
 const ADDRESS = "Osupuko road, Kimana, Kajiado";
-const EMAIL = "vintexguesthouse@gmail.com";
 const MAP_EMBED_SRC =
   "https://maps.google.com/?cid=11731574766368708986&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=en&gl=KE&source=embed";
 
@@ -10,7 +10,7 @@ export function renderContactChannels(mountEl) {
   const whatsappHref = `https://wa.me/${GUESTHOUSE.whatsappNumber}?text=${encodeURIComponent(
     "Hi Vintex, I'd like to ask about a booking."
   )}`;
-  const mailtoHref = `mailto:${EMAIL}?subject=${encodeURIComponent("Question about a stay")}`;
+  const mailtoHref = `mailto:${GUESTHOUSE.email}?subject=${encodeURIComponent("Question about a stay")}`;
 
   const section = el("section", { class: "section" }, [
     el("div", { class: "section__header" }, [
@@ -29,7 +29,7 @@ export function renderContactChannels(mountEl) {
       ]),
       el("div", { class: "contact-card" }, [
         el("h3", {}, "Email"),
-        el("p", {}, `For longer questions or group bookings. ${EMAIL}`),
+        el("p", {}, `For longer questions or group bookings. ${GUESTHOUSE.email}`),
         el("a", { class: "button button--ghost", href: mailtoHref }, "Send an email")
       ]),
       el("div", { class: "contact-card" }, [

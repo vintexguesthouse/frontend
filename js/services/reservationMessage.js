@@ -9,13 +9,13 @@ import { ksh, fmtDate, nightsBetween, escapeHtml } from "../utils.js";
 const GUESTHOUSE_NAME = "Vintex Guest House";
 const GUESTHOUSE_PHONE_DISPLAY = "+254 726 766 023";
 const GUESTHOUSE_WHATSAPP_NUMBER = "254726766023"; // no + or leading zero, wa.me format
+// TODO: confirm this is the real business inbox — placeholder, please replace.
+const GUESTHOUSE_EMAIL = "reservations@vintexguesthouse.com";
 
 /**
  * @param {object} reservation
  * @param {string} reservation.id
- * @param {string} reservation.categoryName
- * @param {number} reservation.quantity
- * @param {number} reservation.pricePerNight
+ * @param {Array<{categoryId: string, categoryName: string, pricePerNight: number, quantity: number}>} reservation.lineItems
  * @param {string} reservation.checkIn  ISO date
  * @param {string} reservation.checkOut ISO date
  * @param {string} reservation.guestName
@@ -26,12 +26,17 @@ const GUESTHOUSE_WHATSAPP_NUMBER = "254726766023"; // no + or leading zero, wa.m
  */
 export function buildReservationSummary(reservation) {
   const nights = nightsBetween(reservation.checkIn, reservation.checkOut);
-  const subtotal = nights * reservation.quantity * reservation.pricePerNight;
+  const lineItems = reservation.lineItems || [];
+  const subtotal = lineItems.reduce((sum, li) => sum + nights * li.quantity * li.pricePerNight, 0);
+
+  const lineItemTextLines = lineItems.map(
+    (li) => `${li.categoryName} × ${li.quantity}  (${ksh(nights * li.quantity * li.pricePerNight)})`
+  );
 
   const lines = [
     `${GUESTHOUSE_NAME} — Reservation ${reservation.id}`,
     "",
-    `${reservation.categoryName} × ${reservation.quantity}`,
+    ...lineItemTextLines,
     `Check-in:  ${fmtDate(reservation.checkIn)}`,
     `Check-out: ${fmtDate(reservation.checkOut)}`,
     `${nights} night${nights === 1 ? "" : "s"} · ${reservation.numGuests} guest${
@@ -51,6 +56,16 @@ export function buildReservationSummary(reservation) {
 
   const text = lines.join("\n");
 
+  const lineItemRowsHtml = lineItems
+    .map(
+      (li) => `
+      <div class="receipt__row receipt__row--main">
+        <span>${escapeHtml(li.categoryName)} × ${li.quantity}</span>
+        <span>${ksh(nights * li.quantity * li.pricePerNight)}</span>
+      </div>`
+    )
+    .join("");
+
   const html = `
     <div class="receipt">
       <div class="receipt__header">
@@ -59,11 +74,7 @@ export function buildReservationSummary(reservation) {
       </div>
 
       <div class="receipt__status receipt__status--pending">Pending confirmation</div>
-
-      <div class="receipt__row receipt__row--main">
-        <span>${escapeHtml(reservation.categoryName)} × ${reservation.quantity}</span>
-        <span>${ksh(subtotal)}</span>
-      </div>
+      ${lineItemRowsHtml}
 
       <div class="receipt__divider"></div>
 
@@ -111,17 +122,20 @@ export function buildWhatsAppLink(reservation, summaryText) {
 }
 
 /**
- * Builds a mailto: link prefilled with subject + body. Only meaningful
- * when the guest supplied an email — callers should gate on that.
+ * Builds a mailto: link addressed to the guesthouse's own business inbox
+ * (so a staff member actually receives the reservation), CC'ing the guest
+ * at their own address if they supplied one so they get a copy too.
  */
 export function buildMailtoLink(reservation, summaryText) {
-  const subject = encodeURIComponent(`Your reservation ${reservation.id} — ${GUESTHOUSE_NAME}`);
+  const subject = encodeURIComponent(`New reservation ${reservation.id} — ${GUESTHOUSE_NAME}`);
   const body = encodeURIComponent(summaryText);
-  return `mailto:${reservation.guestEmail || ""}?subject=${subject}&body=${body}`;
+  const cc = reservation.guestEmail ? `&cc=${encodeURIComponent(reservation.guestEmail)}` : "";
+  return `mailto:${GUESTHOUSE_EMAIL}?subject=${subject}&body=${body}${cc}`;
 }
 
 export const GUESTHOUSE = {
   name: GUESTHOUSE_NAME,
   phoneDisplay: GUESTHOUSE_PHONE_DISPLAY,
-  whatsappNumber: GUESTHOUSE_WHATSAPP_NUMBER
+  whatsappNumber: GUESTHOUSE_WHATSAPP_NUMBER,
+  email: GUESTHOUSE_EMAIL
 };

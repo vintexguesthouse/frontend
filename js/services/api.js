@@ -120,19 +120,40 @@ export async function checkAvailability({ categoryId, checkIn, checkOut }) {
  * succeed before the guest is shown any receipt (architecture doc §4/§5) —
  * callers should not render ReceiptChannelPicker until this resolves.
  *
+ * @param {object} payload
+ * @param {Array<{categoryId: string, categoryName: string, pricePerNight: number, quantity: number}>} payload.lineItems
+ * @param {string} payload.checkIn
+ * @param {string} payload.checkOut
+ * @param {string} payload.guestName
+ * @param {string} payload.guestPhone
+ * @param {string} [payload.guestEmail]
+ * @param {number} payload.numGuests
+ * @param {string} [payload.notes]
+ *
  * Throws on failure so the caller can show the retry/error state rather
- * than a receipt for a booking that never landed.
+ * than a receipt for a booking that never landed. On a SLOT_UNAVAILABLE
+ * error, err.categoryId identifies which line item collided so the caller
+ * can send the guest back to fix just that room type.
  */
 export async function submitReservation(payload) {
   if (USE_MOCKS) {
     await wait(MOCK_LATENCY_MS + 400);
 
-    // Simulate the rare last-second collision described in §4: the slot
-    // filled between checkAvailability() and submit. ~6% of the time.
-    if (Math.random() < 0.06) {
-      const err = new Error('That category just filled up for those dates.');
-      err.code = 'SLOT_UNAVAILABLE';
-      throw err;
+    // Simulate the rare last-second collision described in §4: a slot
+    // filled between checkAvailability() and submit. Checked per line
+    // item, ~6% chance each, so a multi-room-type cart can still fail on
+    // just the one category that lost the race.
+    for (const item of payload.lineItems || []) {
+      const category = MOCK_CATEGORIES.find((c) => c.id === item.categoryId);
+      const booked = mockBookedUnits(item.categoryId, payload.checkIn);
+      const unitsLeft = category ? Math.max(0, category.totalUnits - booked) : 0;
+
+      if (item.quantity > unitsLeft || Math.random() < 0.06) {
+        const err = new Error(`${item.categoryName} just filled up for those dates.`);
+        err.code = 'SLOT_UNAVAILABLE';
+        err.categoryId = item.categoryId;
+        throw err;
+      }
     }
 
     return {
@@ -151,8 +172,15 @@ export async function submitReservation(payload) {
 
   if (!res.ok) {
     if (res.status === 409) {
-      const err = new Error('That category just filled up for those dates.');
+      let categoryId;
+      try {
+        categoryId = (await res.json()).categoryId;
+      } catch {
+        // response body wasn't JSON / didn't include it — non-fatal
+      }
+      const err = new Error('One of the selected room types just filled up for those dates.');
       err.code = 'SLOT_UNAVAILABLE';
+      err.categoryId = categoryId;
       throw err;
     }
     throw new Error(`Failed to submit reservation (${res.status})`);
