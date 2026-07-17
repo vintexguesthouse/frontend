@@ -25,7 +25,7 @@ const DEFAULT_HERO_CONTENT = {
   // Can be a plain string, or an array of strings/nodes (e.g. to insert <br> line breaks).
   title: ["A welcoming guest house,", null, "located in the heart of Kimana."],
   lede:
-    "Five room types, home-cooked meals, and a peaceful courtyard. Vintex Guest House has provided comfortable, affordable stays for travellers and families since 2016.",
+    "Five room types, home-cooked meals, and a peaceful courtyard. Vintex Guest House has provided comfortable, affordable stays for travellers and families since 2024.",
   actions: [
     { href: "rooms.html", label: "See rooms & rates", variant: "primary" },
     { href: "contact.html", label: "Ask a question", variant: "ghost" }
@@ -133,7 +133,7 @@ export function renderAbout(mountEl) {
         )
       ]),
       el("dl", { class: "about__facts" }, [
-        el("div", { class: "about__fact" }, [el("dt", {}, "Opened"), el("dd", {}, "2016")]),
+        el("div", { class: "about__fact" }, [el("dt", {}, "Opened"), el("dd", {}, "2024")]),
         el("div", { class: "about__fact" }, [el("dt", {}, "Room types"), el("dd", {}, "5")]),
         el("div", { class: "about__fact" }, [
           el("dt", {}, "Our Rooms"),

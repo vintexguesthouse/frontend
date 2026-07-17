@@ -21,6 +21,15 @@ export function createReservationModal(mountEl) {
   let lastFocusedEl = null;
   let nextLineItemId = 1;
 
+  // Refs to the uncontrolled detail-phase fields, captured on each render()
+  // so submit/back-to-selection can read their live DOM value without the
+  // fields needing to write to `state` on every keystroke (see fix #1).
+  let detailsFieldRefs = {};
+
+  // Tracks the phase we last autofocused for, so render() only steals focus
+  // on an actual phase transition, not on every incidental re-render.
+  let lastFocusedPhase = null;
+
   function initialState(category) {
     const checkIn = todayISO();
     return {
@@ -40,7 +49,6 @@ export function createReservationModal(mountEl) {
 
       allCategories: null, // loaded lazily for the "add another room type" picker
       categoriesLoading: false,
-      addSelectValue: "",
 
       guestName: "",
       guestPhone: "",
@@ -112,13 +120,14 @@ export function createReservationModal(mountEl) {
       const maxQty = existing.availability ? existing.availability.unitsLeft : existing.category.totalUnits;
       if (existing.quantity < maxQty) {
         updateLineItem(existing.id, { quantity: existing.quantity + 1 });
+      } else {
+        render(); // no state change, but the select still needs to reset to its placeholder
       }
-      setState({ addSelectValue: "" });
       return;
     }
 
     const newItem = { id: nextLineItemId++, category, quantity: 1, availability: null, checkingAvailability: false };
-    setState({ lineItems: [...state.lineItems, newItem], addSelectValue: "" });
+    setState({ lineItems: [...state.lineItems, newItem] });
     refreshAvailabilityForItem(newItem.id);
   }
 
@@ -156,27 +165,43 @@ export function createReservationModal(mountEl) {
     return errors;
   }
 
-  function validateDetails() {
+  function validateDetails(details = state) {
     const errors = {};
     const maxGuests = state.lineItems.reduce((sum, li) => sum + li.category.maxGuests * li.quantity, 0);
 
-    if (!state.guestName.trim()) {
+    if (!details.guestName.trim()) {
       errors.guestName = "Enter the name for this booking.";
     }
-    if (!state.guestPhone.trim()) {
+    if (!details.guestPhone.trim()) {
       errors.guestPhone = "A phone number is required so we can reach you.";
-    } else if (!/^[+\d][\d\s-]{6,}$/.test(state.guestPhone.trim())) {
+    } else if (!/^[+\d][\d\s-]{6,}$/.test(details.guestPhone.trim())) {
       errors.guestPhone = "Enter a valid phone number, e.g. 0712 345 678.";
     }
-    if (state.guestEmail.trim() && !/^\S+@\S+\.\S+$/.test(state.guestEmail.trim())) {
+    if (details.guestEmail.trim() && !/^\S+@\S+\.\S+$/.test(details.guestEmail.trim())) {
       errors.guestEmail = "Enter a valid email address, or leave it blank.";
     }
-    if (state.numGuests < 1) {
+    if (details.numGuests < 1) {
       errors.numGuests = "At least 1 guest is required.";
-    } else if (state.numGuests > maxGuests) {
+    } else if (details.numGuests > maxGuests) {
       errors.numGuests = `Up to ${maxGuests} guests for the rooms selected.`;
     }
     return errors;
+  }
+
+  /**
+   * Reads the live values out of the uncontrolled detail-phase inputs.
+   * Called on submit and when navigating back to selection — the two
+   * "phase transition" points where the guest's typing needs to be
+   * folded into `state` (fix #1), rather than on every keystroke.
+   */
+  function readDetailsFromDom() {
+    return {
+      guestName: detailsFieldRefs.guestName?.value ?? "",
+      guestPhone: detailsFieldRefs.guestPhone?.value ?? "",
+      guestEmail: detailsFieldRefs.guestEmail?.value ?? "",
+      notes: detailsFieldRefs.notes?.value ?? "",
+      numGuests: Number(detailsFieldRefs.numGuests?.value) || 0
+    };
   }
 
   function handleContinue(e) {
@@ -190,18 +215,33 @@ export function createReservationModal(mountEl) {
   }
 
   function handleBackToSelection() {
-    setState({ phase: "selection", fieldErrors: {}, submitError: null, submitErrorCategoryId: null });
+    const currentDetails = readDetailsFromDom();
+    setState({
+      ...currentDetails,
+      phase: "selection",
+      fieldErrors: {},
+      submitError: null,
+      submitErrorCategoryId: null
+    });
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const errors = validateDetails();
+
+    const currentDetails = readDetailsFromDom();
+    const errors = validateDetails(currentDetails);
     if (Object.keys(errors).length > 0) {
-      setState({ fieldErrors: errors });
+      setState({ ...currentDetails, fieldErrors: errors });
       return;
     }
 
-    setState({ phase: "submitting", fieldErrors: {}, submitError: null, submitErrorCategoryId: null });
+    setState({
+      ...currentDetails,
+      phase: "submitting",
+      fieldErrors: {},
+      submitError: null,
+      submitErrorCategoryId: null
+    });
 
     const payload = {
       lineItems: state.lineItems.map((li) => ({
@@ -212,11 +252,11 @@ export function createReservationModal(mountEl) {
       })),
       checkIn: state.checkIn,
       checkOut: state.checkOut,
-      guestName: state.guestName.trim(),
-      guestPhone: state.guestPhone.trim(),
-      guestEmail: state.guestEmail.trim() || undefined,
-      numGuests: state.numGuests,
-      notes: state.notes.trim() || undefined
+      guestName: currentDetails.guestName.trim(),
+      guestPhone: currentDetails.guestPhone.trim(),
+      guestEmail: currentDetails.guestEmail.trim() || undefined,
+      numGuests: currentDetails.numGuests,
+      notes: currentDetails.notes.trim() || undefined
     };
 
     try {
@@ -251,12 +291,51 @@ export function createReservationModal(mountEl) {
     document.removeEventListener("keydown", onKeydown);
   }
 
+  /**
+   * True once the guest has entered something that would be lost by an
+   * unconfirmed close: they've moved past the initial single-room
+   * selection, or into the details/submitting/error phase. Nothing is at
+   * risk once phase is 'success' (the booking already went through), so
+   * that phase is exempt.
+   */
+  function hasUnsavedProgress() {
+    if (!state) return false;
+    if (state.phase === "success") return false;
+    if (state.phase !== "selection") return true;
+    if (state.lineItems.length > 1) return true;
+    if (state.lineItems.length === 1 && state.lineItems[0].quantity !== 1) return true;
+    return false;
+  }
+
+  /**
+   * Gate in front of close() for the "accidental" close vectors (overlay
+   * click, Escape, the × button) — confirms before discarding entered data
+   * rather than closing unconditionally.
+   */
+  function requestClose() {
+    if (hasUnsavedProgress()) {
+      const confirmed = window.confirm(
+        "You have an unfinished booking request. Close and lose these details?"
+      );
+      if (!confirmed) return;
+    }
+    close();
+  }
+
   function onKeydown(e) {
-    if (e.key === "Escape") close();
+    if (e.key === "Escape") requestClose();
   }
 
   function render() {
+    // Preserve the scroll position across the full teardown/rebuild below —
+    // otherwise any incidental state update (an availability response
+    // landing, a stepper click, a phase change) snaps a scrolled-down guest
+    // back to the top (fix #3).
+    const previousScrollEl = mountEl.querySelector(".modal__scroll");
+    const previousScrollTop = previousScrollEl ? previousScrollEl.scrollTop : 0;
+
     mountEl.innerHTML = "";
+    detailsFieldRefs = {}; // repopulated by renderDetails() below, if this render is the details phase
 
     const dialog = el(
       "div",
@@ -274,7 +353,7 @@ export function createReservationModal(mountEl) {
       {
         class: "modal-overlay",
         onClick: (e) => {
-          if (e.target === e.currentTarget) close();
+          if (e.target === e.currentTarget) requestClose();
         }
       },
       [dialog]
@@ -282,10 +361,42 @@ export function createReservationModal(mountEl) {
 
     mountEl.append(overlay);
 
+    const newScrollEl = dialog.querySelector(".modal__scroll");
+    if (newScrollEl) newScrollEl.scrollTop = previousScrollTop;
+
     if (releaseFocusTrap) releaseFocusTrap();
     releaseFocusTrap = trapFocus(dialog);
-    const firstField = dialog.querySelector("input, button, select");
-    if (firstField) firstField.focus();
+
+    // Only steal focus on an actual phase transition (fix #2) — not on
+    // every re-render — and never land it on the close button just because
+    // the header happens to come first in the DOM.
+    if (state.phase !== lastFocusedPhase) {
+      focusFirstMeaningfulField(dialog);
+      lastFocusedPhase = state.phase;
+    }
+  }
+
+  /**
+   * Picks the right field to focus for the phase we just entered, per
+   * fix #2: Check-in date for selection, Guests for details, and a
+   * sensible non-close-button fallback otherwise.
+   */
+  function focusFirstMeaningfulField(dialog) {
+    let target = null;
+
+    if (state.phase === "selection") {
+      target = dialog.querySelector('input[type="date"]');
+    } else if (state.phase === "details") {
+      target = detailsFieldRefs.numGuests || null;
+    }
+
+    if (!target) {
+      target = Array.from(dialog.querySelectorAll("input, button, select, textarea")).find(
+        (node) => !node.classList.contains("modal__close")
+      );
+    }
+
+    if (target) target.focus();
   }
 
   function renderBody() {
@@ -310,33 +421,30 @@ export function createReservationModal(mountEl) {
         {
           class: "form-select",
           disabled: state.categoriesLoading || pickerOptions.length === 0,
-          value: state.addSelectValue,
-          onchange: (e) => setState({ addSelectValue: e.target.value }),
+          value: "", // always shows the placeholder — the change itself commits the item
+          onchange: (e) => {
+            const categoryId = e.target.value;
+            if (categoryId) addLineItem(categoryId);
+          },
           onfocus: () => {
             if (!state.allCategories && !state.categoriesLoading) loadCategoriesForPicker();
           }
         },
         [
-          el("option", { value: "" }, state.categoriesLoading ? "Loading room types…" : "Choose a room type…"),
+          el(
+            "option",
+            { value: "" },
+            state.categoriesLoading ? "Loading room types…" : "Add another room type…"
+          ),
           ...pickerOptions
         ]
-      ),
-      el(
-        "button",
-        {
-          type: "button",
-          class: "button button--ghost",
-          disabled: !state.addSelectValue,
-          onClick: () => addLineItem(state.addSelectValue)
-        },
-        "Add another room type"
       )
     ]);
 
     const dialogBody = el("form", { class: "reservation-form", onSubmit: handleContinue }, [
       el("div", { class: "modal__header" }, [
         el("h2", { id: "modal-title", class: "modal__title" }, "Build your stay"),
-        el("button", { type: "button", class: "modal__close", "aria-label": "Close", onClick: close }, "×")
+        el("button", { type: "button", class: "modal__close", "aria-label": "Close", onClick: requestClose }, "×")
       ]),
 
       el("div", { class: "modal__scroll" }, [
@@ -501,7 +609,7 @@ export function createReservationModal(mountEl) {
     const form = el("form", { class: "reservation-form", onSubmit: handleSubmit }, [
       el("div", { class: "modal__header" }, [
         el("h2", { id: "modal-title", class: "modal__title" }, "Your details"),
-        el("button", { type: "button", class: "modal__close", "aria-label": "Close", onClick: close }, "×")
+        el("button", { type: "button", class: "modal__close", "aria-label": "Close", onClick: requestClose }, "×")
       ]),
 
       el("div", { class: "modal__scroll" }, [
@@ -523,13 +631,16 @@ export function createReservationModal(mountEl) {
         el("section", { class: "form-section" }, [
           el("label", { class: "form-field" }, [
             el("span", { class: "form-field__label" }, "Guests"),
-            el("input", {
-              type: "number",
-              min: "1",
-              value: String(state.numGuests),
-              disabled: isBusy,
-              oninput: (e) => setState({ numGuests: Number(e.target.value) })
-            })
+            (() => {
+              const input = el("input", {
+                type: "number",
+                min: "1",
+                value: String(state.numGuests),
+                disabled: isBusy
+              });
+              detailsFieldRefs.numGuests = input;
+              return input;
+            })()
           ]),
           state.fieldErrors.numGuests ? el("p", { class: "form-error" }, state.fieldErrors.numGuests) : null
         ]),
@@ -537,39 +648,48 @@ export function createReservationModal(mountEl) {
         el("section", { class: "form-section" }, [
           el("label", { class: "form-field" }, [
             el("span", { class: "form-field__label" }, "Full name"),
-            el("input", {
-              type: "text",
-              autocomplete: "name",
-              value: state.guestName,
-              disabled: isBusy,
-              oninput: (e) => setState({ guestName: e.target.value })
-            })
+            (() => {
+              const input = el("input", {
+                type: "text",
+                autocomplete: "name",
+                value: state.guestName,
+                disabled: isBusy
+              });
+              detailsFieldRefs.guestName = input;
+              return input;
+            })()
           ]),
           state.fieldErrors.guestName ? el("p", { class: "form-error" }, state.fieldErrors.guestName) : null,
 
           el("div", { class: "form-row form-row--split" }, [
             el("label", { class: "form-field" }, [
               el("span", { class: "form-field__label" }, "Phone number"),
-              el("input", {
-                type: "tel",
-                autocomplete: "tel",
-                placeholder: "0712 345 678",
-                value: state.guestPhone,
-                disabled: isBusy,
-                oninput: (e) => setState({ guestPhone: e.target.value })
-              }),
+              (() => {
+                const input = el("input", {
+                  type: "tel",
+                  autocomplete: "tel",
+                  placeholder: "0712 345 678",
+                  value: state.guestPhone,
+                  disabled: isBusy
+                });
+                detailsFieldRefs.guestPhone = input;
+                return input;
+              })(),
               el("span", { class: "form-field__hint" }, "We'll use this to confirm your booking.")
             ]),
             el("label", { class: "form-field" }, [
               el("span", { class: "form-field__label" }, "Email (optional)"),
-              el("input", {
-                type: "email",
-                autocomplete: "email",
-                placeholder: "you@example.com",
-                value: state.guestEmail,
-                disabled: isBusy,
-                oninput: (e) => setState({ guestEmail: e.target.value })
-              }),
+              (() => {
+                const input = el("input", {
+                  type: "email",
+                  autocomplete: "email",
+                  placeholder: "you@example.com",
+                  value: state.guestEmail,
+                  disabled: isBusy
+                });
+                detailsFieldRefs.guestEmail = input;
+                return input;
+              })(),
               el("span", { class: "form-field__hint" }, "Only needed if you want an emailed receipt.")
             ])
           ]),
@@ -578,13 +698,16 @@ export function createReservationModal(mountEl) {
 
           el("label", { class: "form-field" }, [
             el("span", { class: "form-field__label" }, "Notes (optional)"),
-            el("textarea", {
-              rows: "2",
-              placeholder: "Late arrival, dietary needs, anything else we should know.",
-              value: state.notes,
-              disabled: isBusy,
-              oninput: (e) => setState({ notes: e.target.value })
-            })
+            (() => {
+              const textarea = el("textarea", {
+                rows: "2",
+                placeholder: "Late arrival, dietary needs, anything else we should know.",
+                value: state.notes,
+                disabled: isBusy
+              });
+              detailsFieldRefs.notes = textarea;
+              return textarea;
+            })()
           ])
         ]),
 
@@ -632,7 +755,7 @@ export function createReservationModal(mountEl) {
     const container = el("div", { class: "modal__scroll modal__scroll--success" }, [
       el("div", { class: "modal__header" }, [
         el("h2", { id: "modal-title", class: "modal__title" }, "Request sent"),
-        el("button", { type: "button", class: "modal__close", "aria-label": "Close", onClick: close }, "×")
+        el("button", { type: "button", class: "modal__close", "aria-label": "Close", onClick: requestClose }, "×")
       ]),
       el("p", { class: "modal__success-lede" }, [
         `Reference `,
