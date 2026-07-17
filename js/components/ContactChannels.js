@@ -3,9 +3,7 @@ import { el } from "../utils.js";
 import { GUESTHOUSE } from "../services/reservationMessage.js";
 
 const ADDRESS = "Osupuko road, Kimana, Kajiado";
-const MAP_EMBED_SRC =
-  "https://maps.google.com/?cid=11731574766368708986&g_mp=CiVnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLkdldFBsYWNlEAMYASAF&hl=en&gl=KE&source=embed";
-
+const MAP_EMBED_SRC = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4986.47791823022!2d37.53628347589852!3d-2.806977539181048!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x183a11b6454660bf%3A0xa2ceed17ed57d97a!2sVintex%20Guest%20House%2C%20Kimana!5e1!3m2!1sen!2ske!4v1784297924793!5m2!1sen!2ske";
 export function renderContactChannels(mountEl) {
   const whatsappHref = `https://wa.me/${GUESTHOUSE.whatsappNumber}?text=${encodeURIComponent(
     "Hi Vintex, I'd like to ask about a booking."
