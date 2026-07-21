@@ -179,7 +179,7 @@ const MOCK_CATEGORIES = [
     pricePerNight: 2500,
     maxGuests: 1,
     totalUnits: 6,
-    imageUrl: '/frontend/assets/SINGLE-ROOM-1.webp',
+    imageUrl: '/frontend/assets/SINGLE-ROOM-3.jpg',
   }
 ];
 
