@@ -15,6 +15,125 @@ const USE_MOCKS = true; // flip to false once WORKER_BASE_URL is live
 
 const MOCK_LATENCY_MS = 550;
 
+// ─────────────────────────────────────────────────────
+// Airtable direct-access (checkAvailability() only)
+// ─────────────────────────────────────────────────────
+//
+// Same base/token/header pattern as the PMS's services/api.js. This is
+// a known temporary security shortcut — the PAT below ships to every
+// visitor's browser — until the Cloudflare Worker gateway exists.
+// getCategories() and submitReservation() are untouched and keep using
+// the mock/Worker path above; only checkAvailability() talks to
+// Airtable directly.
+const AIRTABLE_BASE_ID = "appy89xrqTChzanDq";
+const AIRTABLE_TOKEN = "pat8QF6HLm4msqOmj.6d84422f5599d3d7245dc968b0c9925c1c72bb77ccf53dc9c60b2f1f37f245bf";
+const AIRTABLE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`;
+
+const getAirtableHeaders = () => ({
+  Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+  "Content-Type": "application/json"
+});
+
+// In-memory snapshot of rooms/bookings/reservations/reservation_line_items,
+// refreshed at most every ~15s so flipping between room categories in the
+// modal doesn't refetch all four tables on every keystroke/tab change.
+const AVAILABILITY_CACHE_TTL_MS = 15000;
+let _availabilityCache = null; // { timestamp, rooms, bookings, reservations, reservationLineItems }
+let _availabilityCachePromise = null; // in-flight fetch, so concurrent calls share one request
+
+/**
+ * Normalizes an ISO date (or ISO timestamp) string down to a Date at
+ * local midnight for that calendar day, so overlap math only ever
+ * compares whole days.
+ */
+function _dateOnly(isoLike) {
+  const datePart = String(isoLike).slice(0, 10);
+  return new Date(`${datePart}T00:00:00`);
+}
+
+/** Returns a new Date `days` after `date`. */
+function _addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + (Number(days) || 0));
+  return d;
+}
+
+/**
+ * Overlap test for two [start, end) date ranges. Same-day turnover is
+ * free — a checkout on day N and a check-in on day N do not clash —
+ * so both sides use a strict inequality.
+ */
+function _rangesOverlap(aStart, aEnd, bStart, bEnd) {
+  return aStart < bEnd && bStart < aEnd;
+}
+
+/**
+ * Fetches rooms, bookings, reservations, and reservation_line_items
+ * from Airtable and caches the combined snapshot for ~15s.
+ * `reservations` and `reservation_line_items` alias Airtable's real
+ * `status_reading` field to `.status`, same as the PMS's api.js does
+ * at its fetch boundary.
+ */
+async function _getAvailabilitySnapshot() {
+  const now = Date.now();
+  if (_availabilityCache && now - _availabilityCache.timestamp < AVAILABILITY_CACHE_TTL_MS) {
+    return _availabilityCache;
+  }
+  if (_availabilityCachePromise) {
+    return _availabilityCachePromise;
+  }
+
+  _availabilityCachePromise = (async () => {
+    const [roomsRes, bookingsRes, reservationsRes, lineItemsRes] = await Promise.all([
+      fetch(`${AIRTABLE_URL}/rooms`, { method: "GET", headers: getAirtableHeaders() }),
+      fetch(`${AIRTABLE_URL}/bookings`, { method: "GET", headers: getAirtableHeaders() }),
+      fetch(`${AIRTABLE_URL}/reservations`, { method: "GET", headers: getAirtableHeaders() }),
+      fetch(`${AIRTABLE_URL}/reservation_line_items`, { method: "GET", headers: getAirtableHeaders() })
+    ]);
+
+    for (const [label, res] of [
+      ["rooms", roomsRes],
+      ["bookings", bookingsRes],
+      ["reservations", reservationsRes],
+      ["reservation_line_items", lineItemsRes]
+    ]) {
+      if (!res.ok) throw new Error(`Failed to load ${label} (${res.status})`);
+    }
+
+    const [roomsData, bookingsData, reservationsData, lineItemsData] = await Promise.all([
+      roomsRes.json(),
+      bookingsRes.json(),
+      reservationsRes.json(),
+      lineItemsRes.json()
+    ]);
+
+    const snapshot = {
+      timestamp: now,
+      rooms: roomsData.records.map((r) => ({ airtable_id: r.id, ...r.fields })),
+      bookings: bookingsData.records.map((r) => ({ airtable_id: r.id, ...r.fields })),
+      reservations: reservationsData.records.map((r) => ({
+        airtable_id: r.id,
+        ...r.fields,
+        status: r.fields.status_reading
+      })),
+      reservationLineItems: lineItemsData.records.map((r) => ({
+        line_item_id: r.id,
+        ...r.fields,
+        status: r.fields.status_reading
+      }))
+    };
+
+    _availabilityCache = snapshot;
+    return snapshot;
+  })();
+
+  try {
+    return await _availabilityCachePromise;
+  } finally {
+    _availabilityCachePromise = null;
+  }
+}
+
 // services/api.js
 const MOCK_CATEGORIES = [
   {
@@ -27,7 +146,7 @@ const MOCK_CATEGORIES = [
     imageUrl: '/frontend/assets/family-room-2.webp',
   },
   {
-    id: 'garden-double',
+    id: 'standard-double',
     name: 'Standard Double',
     description: 'A spacious, soundproofed retreat. Featuring a queen bed, a private bathroom, and a balcony that frames stunning mountain views. Your go-to spot for quiet, comfortable rest.',
     pricePerNight: 5000,
@@ -36,7 +155,7 @@ const MOCK_CATEGORIES = [
     imageUrl: '/frontend/assets/DOUBLE-ROOM-2.webp',
   },
   {
-    id: 'budget-twin',
+    id: 'standard-twin',
     name: 'Standard Twin',
     description: 'Ideal for friends or travel partners. Features two comfortable twin beds, a private bathroom, and a balcony to enjoy the fresh air and mountain scenery. Efficient and well-appointed.',
     pricePerNight: 4000,
@@ -45,7 +164,7 @@ const MOCK_CATEGORIES = [
     imageUrl: '/frontend/assets/TWIN-ROOM-3.webp',
   },
   {
-    id: 'executive-suite',
+    id: 'standard-queen',
     name: 'Standard Queen',
     description: 'Our premier room for solo travelers or couples who prefer extra breathing room. Includes a queen bed, dedicated workspace, and a private balcony with panoramic mountain views.',
     pricePerNight: 4000,
@@ -99,19 +218,50 @@ export async function getCategories() {
  * time is rare rather than the normal path.
  */
 export async function checkAvailability({ categoryId, checkIn, checkOut }) {
-  if (USE_MOCKS) {
-    await wait(MOCK_LATENCY_MS);
-    const category = MOCK_CATEGORIES.find((c) => c.id === categoryId);
-    if (!category) throw new Error('Unknown category');
-    const booked = mockBookedUnits(categoryId, checkIn);
-    const unitsLeft = Math.max(0, category.totalUnits - booked);
-    return { categoryId, checkIn, checkOut, unitsLeft, totalUnits: category.totalUnits };
-  }
+  // Deliberately ignores USE_MOCKS — this is the one function on this
+  // page that talks to Airtable directly already (see the header
+  // comment above), independent of whether the Worker is live yet.
+  const snapshot = await _getAvailabilitySnapshot();
 
-  const params = new URLSearchParams({ categoryId, checkIn, checkOut });
-  const res = await fetch(`${WORKER_BASE_URL}/api/availability?${params}`);
-  if (!res.ok) throw new Error(`Failed to check availability (${res.status})`);
-  return res.json();
+  const proposedStart = _dateOnly(checkIn);
+  const proposedEnd = _dateOnly(checkOut);
+
+  const roomsInCategory = snapshot.rooms.filter((r) => r.category_id === categoryId);
+  const totalUnits = roomsInCategory.length;
+  const roomCategoryByName = new Map(snapshot.rooms.map((r) => [r.room_name, r.category_id]));
+
+  // Active PMS bookings in this category that overlap the requested range.
+  const overlappingBookings = snapshot.bookings.filter((b) => {
+    if (!b.is_active) return false;
+    if (roomCategoryByName.get(b.room_name) !== categoryId) return false;
+    if (!b.check_in || !b.nights) return false;
+    const bookingStart = _dateOnly(b.check_in);
+    const bookingEnd = _addDays(bookingStart, b.nights);
+    return _rangesOverlap(proposedStart, proposedEnd, bookingStart, bookingEnd);
+  });
+
+  // pending/confirmed website reservation_line_items in this category whose
+  // parent reservation's dates overlap the range. 'checked_in' line items
+  // are skipped — they already exist as a real booking above, and counting
+  // both would double-count the same room. 'cancelled' holds nothing.
+  const reservationsById = new Map(snapshot.reservations.map((r) => [r.airtable_id, r]));
+  const overlappingLineItemUnits = snapshot.reservationLineItems
+    .filter((li) => {
+      if (li.category_id !== categoryId) return false;
+      if (li.status !== "pending" && li.status !== "confirmed") return false;
+      const reservationId = Array.isArray(li.reservation_id) ? li.reservation_id[0] : li.reservation_id;
+      const reservation = reservationsById.get(reservationId);
+      if (!reservation || !reservation.check_in || !reservation.check_out) return false;
+      const resStart = _dateOnly(reservation.check_in);
+      const resEnd = _dateOnly(reservation.check_out);
+      return _rangesOverlap(proposedStart, proposedEnd, resStart, resEnd);
+    })
+    .reduce((sum, li) => sum + (Number(li.quantity) || 0), 0);
+
+  const unitsUnavailable = overlappingBookings.length + overlappingLineItemUnits;
+  const unitsLeft = Math.max(0, totalUnits - unitsUnavailable);
+
+  return { categoryId, checkIn, checkOut, unitsLeft, totalUnits };
 }
 
 /**
