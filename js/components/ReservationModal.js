@@ -36,6 +36,7 @@ export function createReservationModal(mountEl) {
       phase: "selection", // 'selection' | 'details' | 'submitting' | 'error' | 'success'
       checkIn,
       checkOut: addDaysISO(checkIn, 1),
+      paymentPreference: "post_arrival", // 'post_arrival' | 'advance'
 
       lineItems: [
         {
@@ -256,7 +257,8 @@ export function createReservationModal(mountEl) {
       guestPhone: currentDetails.guestPhone.trim(),
       guestEmail: currentDetails.guestEmail.trim() || undefined,
       numGuests: currentDetails.numGuests,
-      notes: currentDetails.notes.trim() || undefined
+      notes: currentDetails.notes.trim() || undefined,
+      paymentPreference: state.paymentPreference
     };
 
     try {
@@ -710,6 +712,42 @@ export function createReservationModal(mountEl) {
             })()
           ])
         ]),
+        
+        el("section", { class: "form-section" }, [
+          el("span", { class: "form-field__label" }, "How would you like to pay?"),
+          el("div", { class: "payment-choice" }, [
+            el("label", { class: "payment-choice__option" }, [
+              el("input", {
+                type: "radio",
+                name: "payment-preference",
+                value: "post_arrival",
+                checked: state.paymentPreference === "post_arrival",
+                disabled: isBusy,
+                onChange: () => setState({ paymentPreference: "post_arrival" })
+              }),
+              " Pay on arrival"
+            ]),
+            el("label", { class: "payment-choice__option" }, [
+              el("input", {
+                type: "radio",
+                name: "payment-preference",
+                value: "advance",
+                checked: state.paymentPreference === "advance",
+                disabled: isBusy,
+                onChange: () => setState({ paymentPreference: "advance" })
+              }),
+              " Pay in advance"
+            ])
+          ]),
+          state.paymentPreference === "advance"
+            ? el(
+                "p",
+                { class: "form-field__hint" },
+                "We'll reach out via WhatsApp or email to arrange advance payment before your stay."
+              )
+            : null
+        ]),
+        
 
         el("section", { class: "form-section form-summary" }, [
           el("div", { class: "form-summary__row" }, [

@@ -47,6 +47,11 @@ export function buildReservationSummary(reservation) {
     `Phone: ${reservation.guestPhone}`,
     reservation.guestEmail ? `Email: ${reservation.guestEmail}` : null,
     reservation.notes ? `Notes: ${reservation.notes}` : null,
+    `Payment: ${
+      reservation.paymentPreference === "advance"
+        ? "Advance — we'll be in touch"
+        : "On arrival"
+    }`,
     "",
     `Estimated total: ${ksh(subtotal)}`,
     "",
@@ -92,6 +97,11 @@ export function buildReservationSummary(reservation) {
         <dt>Phone</dt><dd>${escapeHtml(reservation.guestPhone)}</dd>
         ${reservation.guestEmail ? `<dt>Email</dt><dd>${escapeHtml(reservation.guestEmail)}</dd>` : ""}
         ${reservation.notes ? `<dt>Notes</dt><dd>${escapeHtml(reservation.notes)}</dd>` : ""}
+        <dt>Payment</dt><dd>${
+          reservation.paymentPreference === "advance"
+            ? "Advance — we'll be in touch"
+            : "On arrival"
+        }</dd>
       </dl>
 
       <div class="receipt__divider"></div>
