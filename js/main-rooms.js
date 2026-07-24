@@ -31,7 +31,7 @@ if (navMount) {
 
 if (heroMount) {
   try {
-    renderHero(heroMount, "/frontend/assets/exterior.webp", {
+    renderHero(heroMount, "/frontend/assets/exterior.jpg", {
       eyebrow: "Rooms & Rates",
       title: ["Five room types,", null, "one perfect fit for your stay."],
       lede: "From cosy singles to spacious family rooms, every Vintex room comes with fresh linens, hot water, and a warm welcome. Browse what\u2019s available below and request your dates.",
