@@ -129,31 +129,31 @@ const CATEGORY_DISPLAY = {
     name: "Family Room",
     description: "Designed for groups and families who need extra space. Features one queen bed and a bunk bed, providing a comfortable home base for up to four guests after a day of exploring Kimana.",
     maxGuests: 4,
-    imageUrl: "/frontend/assets/family-room-2.webp"
+    imageUrl: "/frontend/assets/family-room-2.jpg"
   },
   "standard-double": {
     name: "Standard Double",
     description: "A spacious, soundproofed retreat. Featuring a queen bed, a private bathroom, and a balcony that frames stunning mountain views. Your go-to spot for quiet, comfortable rest.",
     maxGuests: 3,
-    imageUrl: "/frontend/assets/DOUBLE-ROOM-2.webp"
+    imageUrl: "/frontend/assets/DOUBLE-ROOM-3.jpg"
   },
   "standard-twin": {
     name: "Standard Twin",
     description: "Ideal for friends or travel partners. Features two comfortable twin beds, a private bathroom, and a balcony to enjoy the fresh air and mountain scenery. Efficient and well-appointed.",
     maxGuests: 2,
-    imageUrl: "/frontend/assets/TWIN-ROOM-3.webp"
+    imageUrl: "/frontend/assets/TWIN-ROOM-3.jpg"
   },
   "standard-queen": {
     name: "Standard Queen",
     description: "Our premier room for solo travelers or couples who prefer extra breathing room. Includes a queen bed, dedicated workspace, and a private balcony with panoramic mountain views.",
     maxGuests: 2,
-    imageUrl: "/frontend/assets/QUEEN-WADROP-1.webp"
+    imageUrl: "/frontend/assets/QUEEN-WADROP-1.jpg"
   },
   "single-room": {
     name: "Single Room",
     description: "Your private sanctuary in Kimana. A compact and comfortable space featuring a single bed, a dedicated desk for your travel planning, and a balcony overlooking the mountains.",
     maxGuests: 1,
-    imageUrl: "/frontend/assets/SINGLE-ROOM-3.jpg"
+    imageUrl: "/frontend/assets/SINGLE-WADROP.jpg"
   }
 };
 
