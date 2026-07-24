@@ -41,8 +41,8 @@ function _rangesOverlap(aStart, aEnd, bStart, bEnd) {
 // Add near the top of api.js
 function _formatReservationRef(rawRef) {
   const n = Number(rawRef);
-  if (!Number.isFinite(n)) return String(rawRef ?? "");
-  return `VGH-${String(n).padStart(4, "0")}`;
+  if (!Number.isFinite(n)) return String(rawRef ?? '');
+  return `VGH-${String(n).padStart(4, '0')}`;
 }
 
 async function _getAvailabilitySnapshot() {
@@ -61,19 +61,14 @@ async function _getAvailabilitySnapshot() {
     ]);
 
     for (const [label, res] of [
-      ["rooms", roomsRes],
-      ["bookings", bookingsRes],
-      ["reservations", reservationsRes],
-      ["reservation_line_items", lineItemsRes]
+      ["rooms", roomsRes], ["bookings", bookingsRes],
+      ["reservations", reservationsRes], ["reservation_line_items", lineItemsRes]
     ]) {
       if (!res.ok) throw new Error(`Failed to load ${label} (${res.status})`);
     }
 
     const [roomsData, bookingsData, reservationsData, lineItemsData] = await Promise.all([
-      roomsRes.json(),
-      bookingsRes.json(),
-      reservationsRes.json(),
-      lineItemsRes.json()
+      roomsRes.json(), bookingsRes.json(), reservationsRes.json(), lineItemsRes.json()
     ]);
 
     _availabilityCache = {
@@ -81,14 +76,10 @@ async function _getAvailabilitySnapshot() {
       rooms: roomsData.records.map((r) => ({ airtable_id: r.id, ...r.fields })),
       bookings: bookingsData.records.map((r) => ({ airtable_id: r.id, ...r.fields })),
       reservations: reservationsData.records.map((r) => ({
-        airtable_id: r.id,
-        ...r.fields,
-        status: r.fields.status_reading
+        airtable_id: r.id, ...r.fields, status: r.fields.status_reading
       })),
       reservationLineItems: lineItemsData.records.map((r) => ({
-        line_item_id: r.id,
-        ...r.fields,
-        status: r.fields.status_reading
+        line_item_id: r.id, ...r.fields, status: r.fields.status_reading
       }))
     };
     return _availabilityCache;
@@ -105,6 +96,27 @@ function _invalidateAvailabilityCache() {
   _availabilityCache = null;
 }
 
+/**
+ * Deletes a just-created `reservations` record when the follow-on
+ * `reservation_line_items` write fails, so a guest never ends up with a
+ * reservation that has no rooms attached to it (and a retry after seeing
+ * the error doesn't pile up duplicate orphaned records).
+ */
+async function _rollbackReservation(reservationId, cause) {
+  console.error("[submitReservation] Line items write failed — rolling back reservation", reservationId, cause);
+  try {
+    const res = await fetch(`${AIRTABLE_URL}/reservations/${reservationId}`, {
+      method: "DELETE",
+      headers: getAirtableHeaders()
+    });
+    if (!res.ok) {
+      console.error(`[submitReservation] Rollback DELETE failed too (${res.status}) — reservation ${reservationId} is orphaned, needs manual cleanup in Airtable.`);
+    }
+  } catch (rollbackErr) {
+    console.error(`[submitReservation] Rollback DELETE threw — reservation ${reservationId} is orphaned, needs manual cleanup in Airtable.`, rollbackErr);
+  }
+}
+
 // ─────────────────────────────────────────────────────
 // Category display content — Airtable has no "categories" table, so
 // name/description/images/maxGuests live here. totalUnits and
@@ -115,36 +127,31 @@ function _invalidateAvailabilityCache() {
 const CATEGORY_DISPLAY = {
   "family-room": {
     name: "Family Room",
-    description:
-      "Designed for groups and families who need extra space. Features one queen bed and a bunk bed, providing a comfortable home base for up to four guests after a day of exploring Kimana.",
+    description: "Designed for groups and families who need extra space. Features one queen bed and a bunk bed, providing a comfortable home base for up to four guests after a day of exploring Kimana.",
     maxGuests: 4,
-    imageUrl: "/frontend/assets/family-room-2.jpg"
+    imageUrl: "/frontend/assets/family-room-2.webp"
   },
   "standard-double": {
     name: "Standard Double",
-    description:
-      "A spacious, soundproofed retreat. Featuring a queen bed, a private bathroom, and a balcony that frames stunning mountain views. Your go-to spot for quiet, comfortable rest.",
+    description: "A spacious, soundproofed retreat. Featuring a queen bed, a private bathroom, and a balcony that frames stunning mountain views. Your go-to spot for quiet, comfortable rest.",
     maxGuests: 3,
-    imageUrl: "/frontend/assets/DOUBLE-ROOM-2.jpg"
+    imageUrl: "/frontend/assets/DOUBLE-ROOM-2.webp"
   },
   "standard-twin": {
     name: "Standard Twin",
-    description:
-      "Ideal for friends or travel partners. Features two comfortable twin beds, a private bathroom, and a balcony to enjoy the fresh air and mountain scenery. Efficient and well-appointed.",
+    description: "Ideal for friends or travel partners. Features two comfortable twin beds, a private bathroom, and a balcony to enjoy the fresh air and mountain scenery. Efficient and well-appointed.",
     maxGuests: 2,
     imageUrl: "/frontend/assets/TWIN-ROOM-3.webp"
   },
   "standard-queen": {
     name: "Standard Queen",
-    description:
-      "Our premier room for solo travelers or couples who prefer extra breathing room. Includes a queen bed, dedicated workspace, and a private balcony with panoramic mountain views.",
+    description: "Our premier room for solo travelers or couples who prefer extra breathing room. Includes a queen bed, dedicated workspace, and a private balcony with panoramic mountain views.",
     maxGuests: 2,
-    imageUrl: "/frontend/assets/QUEEN-WADROP-1.jpg"
+    imageUrl: "/frontend/assets/QUEEN-WADROP-1.webp"
   },
   "single-room": {
     name: "Single Room",
-    description:
-      "Your private sanctuary in Kimana. A compact and comfortable space featuring a single bed, a dedicated desk for your travel planning, and a balcony overlooking the mountains.",
+    description: "Your private sanctuary in Kimana. A compact and comfortable space featuring a single bed, a dedicated desk for your travel planning, and a balcony overlooking the mountains.",
     maxGuests: 1,
     imageUrl: "/frontend/assets/SINGLE-ROOM-3.jpg"
   }
@@ -245,9 +252,7 @@ export async function checkAvailability({ categoryId, checkIn, checkOut }) {
 export async function submitReservation(payload) {
   for (const item of payload.lineItems || []) {
     const avail = await checkAvailability({
-      categoryId: item.categoryId,
-      checkIn: payload.checkIn,
-      checkOut: payload.checkOut
+      categoryId: item.categoryId, checkIn: payload.checkIn, checkOut: payload.checkOut
     });
     if (item.quantity > avail.unitsLeft) {
       const err = new Error(`${item.categoryName} just filled up for those dates.`);
@@ -272,7 +277,7 @@ export async function submitReservation(payload) {
         payment_preference: payload.paymentPreference,
         status_reading: "pending",
         source: "website",
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString().slice(0, 10)
       }
     })
   });
@@ -292,25 +297,33 @@ export async function submitReservation(payload) {
   const reservationId = reservationRecord.id;
   const reservationRef = _formatReservationRef(reservationRecord.fields.reservation_ref);
 
-  const lineItemsRes = await fetch(`${AIRTABLE_URL}/reservation_line_items`, {
-    method: "POST",
-    headers: getAirtableHeaders(),
-    body: JSON.stringify({
-      records: payload.lineItems.map((item) => ({
-        fields: {
-          reservation_id: [reservationId],
-          category_id: item.categoryId,
-          category_name: item.categoryName,
-          quantity: item.quantity,
-          price_per_night_at_booking: item.pricePerNight,
-          status_reading: "pending"
-        }
-      }))
-    })
-  });
+  let lineItemsRes;
+  try {
+    lineItemsRes = await fetch(`${AIRTABLE_URL}/reservation_line_items`, {
+      method: "POST",
+      headers: getAirtableHeaders(),
+      body: JSON.stringify({
+        records: payload.lineItems.map((item) => ({
+          fields: {
+            reservation_id: [reservationId],
+            category_id: item.categoryId,
+            category_name: item.categoryName,
+            quantity: item.quantity,
+            price_per_night_at_booking: item.pricePerNight,
+            status_reading: "pending"
+          }
+        }))
+      })
+    });
+  } catch (networkErr) {
+    await _rollbackReservation(reservationId, networkErr);
+    throw new Error("Failed to create reservation line items (network error)");
+  }
+
   if (!lineItemsRes.ok) {
     const errorBody = await lineItemsRes.json().catch(() => null);
     console.error("[submitReservation] Airtable rejected the line items write:", errorBody);
+    await _rollbackReservation(reservationId, errorBody);
     throw new Error(`Failed to create reservation line items (${lineItemsRes.status})`);
   }
 

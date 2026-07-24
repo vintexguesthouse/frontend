@@ -278,7 +278,7 @@ export function createReservationModal(mountEl) {
       } else {
         setState({
           phase: "error",
-          submitError: "We couldn't reach the booking system. Please check your connection and try again.",
+          submitError: "Something went wrong submitting your reservation. Please try again, or contact us directly if it keeps happening.",
           submitErrorCategoryId: null
         });
       }

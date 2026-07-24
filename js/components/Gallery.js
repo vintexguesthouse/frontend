@@ -4,14 +4,14 @@ import { createLightbox } from "./Lightbox.js";
 
 const GALLERY_IMAGES = [
   // Exterior
-  { src: "/frontend/assets/exterior.webp", alt: "The guest house exterior courtyard" },
+  { src: "/frontend/assets/exterior.jpg", alt: "The guest house exterior courtyard" },
   { src: "/frontend/assets/EXTERIOR-5.jpg", alt: "The guest house name banner" },
 
   // Rooms
   { src: "/frontend/assets/family-room-2.jpg", alt: "Family room interior with bunk beds and double bed" },
   { src: "/frontend/assets/DOUBLE-ROOM-2.jpg", alt: "Interior of the Double room" },
   { src: "/frontend/assets/SINGLE-ROOM-3.jpg", alt: "Interior of the Single room" },
-  { src: "/frontend/assets/TWIN-ROOM-3.webp", alt: "Interior of the Twin room with mosquito nets" },
+  { src: "/frontend/assets/TWIN-ROOM-3.jpg", alt: "Interior of the Twin room with mosquito nets" },
   { src: "/frontend/assets/QUEEN-WADROP-1.jpg", alt: "Interior of the Queen room featuring the wardrobe" },
   { src: "/frontend/assets/SINGLE-WADROP.jpg", alt: "Interior of the Single room featuring the wardrobe" },
 
